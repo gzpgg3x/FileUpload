@@ -1,0 +1,131 @@
+﻿创建django app
+
+http://www.webercn.com/ 中国web开发档案 原创
+
+进行项目目录(我是D:\weberCn),运行
+manage.py startapp Book
+我生成的是一个Book程序,可以将Book换成任务合法的名称.
+此时,在该目录下产生一个Book目录,它看起来就像python的"包",实际上真是一个python包.它有四个文件分别是models.py tests.py __init.py和views.py,这就是一个django的app了,看起来非常简单.
+
+规划Book app
+
+首先,一个最简单的Book App应该包含什么(注意我这个Book app和django官方的"概念"上是有区别的,我的就是你在使用的django bookapp ,这也是我webercn.com的第一个程序):
+出版社(一个出版社有多本出版书, 名称)
+作家(一个作家可以有多本书, 姓名)
+书(书要有书名,章,节,作者(多个),出版社(一个))
+大概清楚之后,我们就可以开始设计出数据结构(表)了,也就是所谓的模型.
+
+打开Book目录下的models.py,先导入要用到的几个类
+
+import uuid
+from django.db import models
+from django.contrib.auth.models import User
+
+创建出版社模型
+
+class Publisher(models.Model):
+    id      = models.AutoField(primary_key=True)
+    name    = models.CharField(max_length=30)#出版社名称
+    website = models.URLField(default='javascript:void(0);')#它的网站
+    address = models.CharField(max_length=50)#地址
+     
+    #这个函数的意思是后台显示这个对象时以返回的字符串代替.
+    def __unicode__(self):
+        return self.name
+其中:
+models.Model是django自带的强大处理模型的类.更多的信息请查询官方资料
+AutoField意思是将这个字段设为自增量字段,primary_key=True更不用说了
+CharField是一般varchar类型max_length指定字数,每个charfiled都是需要的
+URLField是django专业用来存URL的字段,写入时会检查是否是一个url
+
+创建作家模型
+
+class Author(models.Model):
+    id         = models.AutoField(primary_key=True)
+    first_name = models.CharField(max_length=30)
+    last_name  = models.CharField(max_length=40)
+    detail     = models.ForeignKey(User)
+    
+    def __unicode__(self):
+        return u'%s %s'%(self.first_name, self.last_name)
+注意detail 是一个 ForeignKey ,非常好用的一个一对多关系外键.用法见模型
+
+创建书籍模型
+
+class Book(models.Model):
+    id        = models.AutoField(primary_key=True)
+    title     = models.CharField(max_length=100)
+    seotitle  = models.CharField(max_length=128)
+    tags     = models.CharField(max_length=128,blank=True)
+    authors   = models.ManyToManyField(Author)
+    publisher = models.ForeignKey(Publisher)
+    publication_date = models.DateField(auto_now_add = True)
+    description = models.TextField()
+    cheight = models.CharField(default=u'300',max_length=11)
+    cwidth  = models.CharField(default=u'240',max_length=11)
+    cover     = models.ImageField(upload_to='bookCover/%Y/%m',height_field='cheight',width_field='cwidth',blank=True)
+    
+    def __unicode__(self):
+        return self.title
+
+ForeignKey:每本书都有一个publisher(出版社),那么,如果通过书籍来找出版社呢?
+例子: 有一个书名叫《webercn》,出版社是＂webercn.com＂，那么（相关函数API用到再说）
+
+try:
+    book = Book.objects.filter(title=u"webercn")[0]
+    print book.publisher.name　#得到webercn.com，是不是很方便
+    #Book.objects.filter(title=u"webercn")意思是从Book表中找到title=webercn的书，返回的是一个列表
+    #当然也可以不是title，任何Book里有的字段都可以，django会帮你处理的
+except:
+    pass
+    
+ManyToManyField:每本书可能不止一个作者，一个作家也可能会有不止一本书,与Publisher一样，也可以通知书来找作者
+例子：有一个书名叫《webercn》,作者是＂webercn.com＂和＂www.webercn.com＂，那么
+try:
+    book = Book.objects.filter(title=u"webercn")[0]
+    authors = book.authors_set.all()
+    for author in authors:
+        print author.last_name
+    #注意authors_set，authors就是Book中的字段，加上_set后就到Author中找它的集合
+    #反过来通过作者找书也是一样的
+except:
+    pass
+    
+ImageField这个更牛，可以自动处理上传图片的，upload_to参数就是指定到settings.MEDIA_ROOT下的某个子目录。可以用%Y,%m等时间格式化目录，会自动创建。
+height_field和width_field是保存图片的宽和高，启用这个字段要装PIL库
+
+章节模型
+class Chapter(models.Model):
+    id    = models.AutoField(primary_key=True)
+    book  = models.ForeignKey(Book)
+    title = models.CharField(max_length=100)
+    seotitle  = models.CharField(max_length=128)
+    weight    = models.IntegerField(default=0)
+    description = models.TextField()
+    tags     = models.CharField(max_length=128,blank=True)
+
+class Lession(models.Model):
+    id       = models.AutoField(primary_key=True)
+    chapter  = models.ForeignKey(Chapter)
+    title    = models.CharField(max_length=128)
+    subtitle = models.CharField(max_length=128, blank=True)
+    seotitle = models.CharField(max_length=128, blank=True)
+    summary  = models.TextField(blank=True)
+    content  = models.TextField()
+    tags     = models.CharField(max_length=128,blank=True)
+    
+    time_created  = models.DateTimeField(auto_now_add=True)
+    time_modefied = models.DateTimeField(auto_now=True)
+    time_replied  = models.DateTimeField(auto_now_add=True)
+    
+    counter_staied  = models.IntegerField(default=0)
+    counter_visited = models.IntegerField(default=0)
+    counter_replied = models.IntegerField(default=0)
+    
+    weight = models.IntegerField(default=0)
+    uuid   = models.CharField(max_length=40, unique=True, db_index=True, default=uuid.uuid1)
+    enable = models.BooleanField(default=True)
+    has_attachment = models.FileField(upload_to = 'book_attachment',blank=True)
+
+DateTimeField是日期-时间字段，auto_now_add=True是表示新增记录时自动赋值为当前的日期时间，auto_now则是更新保存时。
+
