@@ -16,7 +16,8 @@ def list(request):
             newdoc.save()
 
             # Redirect to the document list after POST
-            return HttpResponseRedirect(reverse('myproject.myapp.views.list'))
+            # return HttpResponseRedirect(reverse('myproject.myapp.views.list'))
+            return HttpResponseRedirect(reverse('myapp.views.list'))
     else:
         form = DocumentForm() # A empty, unbound form
 
@@ -25,7 +26,7 @@ def list(request):
 
     # Render list page with the documents and the form
     return render_to_response(
-        'myapp/list.html',
+        'list.html',
         {'documents': documents, 'form': form},
         context_instance=RequestContext(request)
     )

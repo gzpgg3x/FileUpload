@@ -18,16 +18,29 @@ admin.autodiscover()
 
 
 
+# # -*- coding: utf-8 -*-
+# from django.conf.urls import patterns, include, url
+# from django.conf import settings
+# from django.conf.urls.static import static
+# #from django.views.generic.simple import redirect_to
+# from django.views.generic import TemplateView
+
+# urlpatterns = patterns('',
+# 	url(r'^admin/', include(admin.site.urls)),
+# 	(r'^myapp/', include('myapp.urls')),
+# 	# (r'^$', redirect_to, {'url': '/myapp/list/'}), # Just for ease of use.
+#     # (r'^$', TemplateView.as_view(template_name="list.html")),
+#     (r'^$', TemplateView.as_view(template_name="list.html")),
+# ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
 # -*- coding: utf-8 -*-
-from django.conf.urls import patterns, include, url
+from django.conf.urls.defaults import patterns, include, url
 from django.conf import settings
 from django.conf.urls.static import static
-#from django.views.generic.simple import redirect_to
-from django.views.generic import TemplateView
 
 urlpatterns = patterns('',
 	url(r'^admin/', include(admin.site.urls)),
-	(r'^myapp/', include('myapp.urls')),
-	# (r'^$', redirect_to, {'url': '/myapp/list/'}), # Just for ease of use.
-    (r'^$', TemplateView.as_view(template_name="list.html")),
+    (r'^', include('myapp.urls')),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
